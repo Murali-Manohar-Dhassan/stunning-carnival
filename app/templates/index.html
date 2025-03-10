@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Data Input</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: scale(1.02);
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body class="container mt-4">
+    <h2 class="text-center text-primary mb-4">Station Data Input</h2>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <label class="form-label">Enter the number of stations:</label>
+            <input type="number" id="numStations" class="form-control mb-3" min="1" placeholder="Number of Stations">
+            <button class="btn btn-primary w-100" onclick="generateStationFields()">Generate</button>
+        </div>
+    </div>
+    <div class="row mt-4" id="stationContainer"></div>
+    <div class="row mt-4">
+        <div class="col text-center">
+            <button class="btn btn-success" onclick="submitData()">Submit</button>
+        </div>
+    </div>
+    <div class="loader" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <script>
+        // Function to dynamically generate station input fields based on user input
+        function generateStationFields() {
+            const numStations = document.getElementById("numStations").value;
+            const container = document.getElementById("stationContainer");
+            container.innerHTML = ""; // Clear any previous entries
+
+            if (!numStations || numStations < 1) {
+                alert("Please enter a valid number of stations.");
+                return;
+            }
+
+            for (let i = 1; i <= numStations; i++) {
+                const card = document.createElement("div");
+                card.className = "col-md-4 mb-3";
+                card.innerHTML = `
+                    <div class="card shadow p-3">
+                        <h5 class="text-center text-secondary">Station ${i}</h5>
+                        <label class="form-label">Station Name:</label>
+                        <input type="text" class="form-control mb-2" id="stationName${i}" required>
+                        <label class="form-label">Stationary Slots:</label>
+                        <input type="number" class="form-control mb-2" id="stationarySlots${i}" min="0" required>
+                        <label class="form-label">Onboard Slots:</label>
+                        <input type="number" class="form-control" id="onboardSlots${i}" min="0" required>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        // Function to collect user input and submit data to the server
+        function submitData() {
+            const numStations = document.getElementById("numStations").value;
+            const stationData = [];
+            document.getElementById("loadingSpinner").style.display = "block"; // Show loading animation
+
+            // Collect station data from user input
+            for (let i = 1; i <= numStations; i++) {
+                stationData.push({
+                    name: document.getElementById(`stationName${i}`).value,
+                    stationSlots: parseInt(document.getElementById(`stationarySlots${i}`).value),
+                    onboardSlots: parseInt(document.getElementById(`onboardSlots${i}`).value)
+                });
+            }
+
+            // Send collected data to the server via a POST request
+            fetch("/allocate_slots_endpoint", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(stationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Data submitted successfully!");
+                document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+            })
+            .catch(err => {
+                alert("Error: " + err);
+                document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation on error
+            });
+        }
+    </script>
+</body>
+</html>
