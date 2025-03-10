@@ -97,7 +97,12 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert("Data submitted successfully!");
+                if (data.fileUrl) {
+                // Automatically trigger file download
+                window.location.href = data.fileUrl;
+                } else {
+                    alert("Error generating file.");
+                }
                 document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
             })
             .catch(err => {
