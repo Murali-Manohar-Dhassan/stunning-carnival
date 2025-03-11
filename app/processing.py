@@ -80,12 +80,16 @@ def apply_color_scheme():
     if not os.path.exists(INPUT_FILE):
         raise FileNotFoundError("Generated Excel file not found!")
 
+    df = pd.read_excel(INPUT_FILE)
+    
+    # Ensure the "Frequency" column exists
+    if "Frequency" not in df.columns:
+        raise KeyError("The 'Frequency' column is missing in the Excel file. Ensure slot allocation writes it correctly.")
+
     wb = openpyxl.load_workbook(INPUT_FILE)
     ws = wb.active
-    df = pd.read_excel(INPUT_FILE)
 
-
-    # Define color map for frequency
+    # Define color mapping for different frequency values
     color_map = {
         1: "FFFF00",  # Yellow
         2: "0000FF",  # Blue
@@ -96,25 +100,22 @@ def apply_color_scheme():
         7: "008000"   # Green
     }
 
-    # Iterate through each column (stations) to apply colors
+    # Iterate through each station column to apply colors
     for col in range(2, ws.max_column + 1):  # Start from column 2 (ignore 'Slot' column)
         station_name = ws.cell(row=1, column=col).value  # Get station name
         if not station_name:
-            continue  # Skip if no station name
+            continue  # Skip empty station columns
 
-        # Get frequency of this station from the dataframe
-        try:
-            frequency = df[df["Slot"] == station_name]["Frequency"].values[0]
-        except IndexError:
-            frequency = 1  # Default to frequency 1 if not found
-
-        # Determine the fill color based on frequency
-        color_code = color_map.get(frequency, "FFFFFF")  # Default to white
+        # Get frequency for this station
+        frequency = df[df["Slot"] == station_name]["Frequency"].values[0] if station_name in df["Slot"].values else 1
+        color_code = color_map.get(frequency, "FFFFFF")  # Default to white if frequency not found
 
         # Apply color only to non-empty cells
         for row in range(2, ws.max_row + 1):  # Skip header row
             cell = ws.cell(row=row, column=col)
-            if cell.value:  # Only color non-empty cells
+            if cell.value:  # Only color non-empty slots
                 cell.fill = PatternFill(start_color=color_code, end_color=color_code, fill_type="solid")
-    # Save final file
+
+    # Save final colored Excel file
     wb.save(OUTPUT_FILE)
+
