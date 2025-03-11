@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import os
-from app.processing import allocate_slots, generate_excel
+from app.processing import generate_excel
 
 app = Flask(__name__)
 
@@ -12,21 +12,20 @@ def home():
 def allocate_slots_endpoint():
     try:
         stations = request.json
-        allocations = allocate_slots(stations)
-        file_path = generate_excel(allocations)  # Ensure this returns the correct path
-        # Correct file URL
-        return jsonify({"fileUrl": "/download"})
+        final_excel_path = generate_excel(stations)  # Now generates final output file
+
+        return jsonify({"fileUrl": "/download"})  # Return correct download path
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/download")
 def download_file():
-    file_path = os.path.join(os.getcwd(), "slot_allocation.xlsx")  # Correct file path
+    file_path = os.path.join(os.getcwd(), "output_kavach_slots_colored.xlsx")  # Ensure correct file path
 
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
     else:
-        return jsonify({"error": "File not found"}), 404
+        return jsonify({"error": "Final output file not found"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
