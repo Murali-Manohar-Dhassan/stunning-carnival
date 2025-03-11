@@ -38,7 +38,7 @@ def generate_excel(stations):
     apply_slot_coloring(INPUT_FILE)
     
     
-        return OUTPUT_FILE  # Return final colored Excel file
+    return OUTPUT_FILE  # Return final colored Excel file
 
 # Ensure the file is created before proceeding
 def wait_for_file(file_path, max_wait_time=10):
