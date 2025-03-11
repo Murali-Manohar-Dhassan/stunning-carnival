@@ -4,6 +4,7 @@ import os
 
 app = Flask(__name__)
 
+# Slot allocation logic
 def allocate_slots(stations, max_slots=45, max_frequencies=7):
     allocations = []
     current_frequency = 1
@@ -83,7 +84,8 @@ def allocate_slots_endpoint():
 
         # ✅ Log that the file was created
         print(f"✅ Successfully created slot allocation file: {file_path}")
-
+        print(f"📂 File exists? {os.path.exists(file_path)}")
+        
         return jsonify({"fileUrl": f"/download/{file_path}"})
     except Exception as e:
         print(f"❌ Error creating slot allocation file: {str(e)}")
