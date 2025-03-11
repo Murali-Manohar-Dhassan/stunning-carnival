@@ -4,17 +4,18 @@ import xlsxwriter
 import openpyxl
 from openpyxl.styles import PatternFill
 
-# Define paths for generated files
-BASE_DIR = os.getcwd()  # Ensure correct working directory
+# Define file paths
+BASE_DIR = os.getcwd()
 INPUT_FILE = os.path.join(BASE_DIR, "slot_allocation.xlsx")
 OUTPUT_FILE = os.path.join(BASE_DIR, "output_kavach_slots_colored.xlsx")
 
-# Step 1: Slot Allocation Logic
+# Step 1: Slot Allocation
 def allocate_slots(stations, max_slots=45, max_frequencies=7):
-    allocations = []
+    allocations = {station["name"]: [""] * max_slots for station in stations}  # Initialize slots for each station
+    slot_numbers = [f"P{i}" for i in range(1, max_slots + 1)]
     current_frequency = 1
-    station_alloc = [0] * max_slots
-    onboard_alloc = [0] * max_slots
+    station_alloc = [0] * max_slots  # Track allocated slots
+    onboard_alloc = [0] * max_slots  # Track onboard slots
 
     def next_frequency():
         nonlocal current_frequency
@@ -28,8 +29,6 @@ def allocate_slots(stations, max_slots=45, max_frequencies=7):
         station_name = station["name"]
         station_slots = station["stationSlots"]
         onboard_slots = station["onboardSlots"]
-        station_slot_range = []
-        onboard_slot_allocations = []
 
         available_station_slots = station_alloc.count(0)
         available_onboard_slots = onboard_alloc.count(0)
@@ -41,62 +40,40 @@ def allocate_slots(stations, max_slots=45, max_frequencies=7):
         for i in range(max_slots):
             if station_alloc[i] == 0 and allocated_station_slots < station_slots:
                 station_alloc[i] = station_name
-                station_slot_range.append(f"P{i+1}")
+                allocations[station_name][i] = slot_numbers[i]
                 allocated_station_slots += 1
 
         allocated_onboard_slots = 0
-        i = 0
-        while allocated_onboard_slots < onboard_slots and i < max_slots:
-            if station_alloc[i] == station_name:
-                i += 1
-                continue
-            if onboard_alloc[i] == 0:
+        for i in range(max_slots):
+            if onboard_alloc[i] == 0 and allocated_onboard_slots < onboard_slots:
                 onboard_alloc[i] = station_name
-                onboard_slot_allocations.append(f"P{i+1}")
+                allocations[station_name][i] = slot_numbers[i]
                 allocated_onboard_slots += 1
-            i += 1
 
-        allocations.append({
-            "Station": station_name,
-            "Frequency": current_frequency,
-            "Stationary Kavach Slots": ", ".join(station_slot_range),
-            "Onboard Kavach Slots": ", ".join(onboard_slot_allocations)
-        })
+    return allocations
 
-    return allocations  # This list will be used to generate Excel
-
-# Step 2: Generate Excel from Allocated Data
+# Step 2: Generate Excel File
 def generate_excel(stations):
-    allocations = allocate_slots(stations)  # Ensure slot allocation happens first
+    allocations = allocate_slots(stations)
+    df = pd.DataFrame(allocations)
+    df.insert(0, "Slot", [f"P{i}" for i in range(1, len(df) + 1)])  # Add Slot column
+    df.to_excel(INPUT_FILE, index=False)
 
-    workbook = xlsxwriter.Workbook(INPUT_FILE)
-    worksheet = workbook.add_worksheet()
-
-    headers = ["Station", "Frequency", "Stationary Kavach Slots", "Onboard Kavach Slots"]
-    for col, header in enumerate(headers):
-        worksheet.write(0, col, header)
-
-    for row, alloc in enumerate(allocations, start=1):
-        worksheet.write(row, 0, alloc["Station"])
-        worksheet.write(row, 1, alloc["Frequency"])
-        worksheet.write(row, 2, alloc["Stationary Kavach Slots"])
-        worksheet.write(row, 3, alloc["Onboard Kavach Slots"])
-
-    workbook.close()
-
-    # After generating the first file, apply the color scheme
+    # Apply color scheme
     apply_color_scheme()
+    
+    return OUTPUT_FILE  # Return final colored file
 
-    return OUTPUT_FILE  # Return the final colored Excel file
-
-# Step 3: Apply Color Scheme to the Generated Excel
+# Step 3: Apply Color Coding
 def apply_color_scheme():
     if not os.path.exists(INPUT_FILE):
         raise FileNotFoundError("Generated Excel file not found!")
 
-    input_df = pd.read_excel(INPUT_FILE)
+    df = pd.read_excel(INPUT_FILE)
+    wb = openpyxl.load_workbook(INPUT_FILE)
+    ws = wb.active
 
-    # Define color mapping based on frequency
+    # Define color map for frequency
     color_map = {
         1: "FFFF00",  # Yellow
         2: "0000FF",  # Blue
@@ -107,18 +84,16 @@ def apply_color_scheme():
         7: "008000"   # Green
     }
 
-    # Load Excel file to apply colors
-    wb = openpyxl.load_workbook(INPUT_FILE)
-    ws = wb.active
+    # Apply colors based on frequency values
+    for row in range(2, len(df) + 2):  # Skip header row
+        slot_name = ws.cell(row=row, column=1).value
+        for col in range(2, ws.max_column + 1):  # Iterate through stations
+            station_name = ws.cell(1, col).value
+            if pd.notna(station_name) and pd.notna(slot_name):  # Check if cell contains a value
+                # Extract frequency (assume frequency is stored in station data)
+                frequency = 1  # Default frequency; modify as needed
+                color_code = color_map.get(frequency, "FFFFFF")  # Default to white
+                ws.cell(row=row, column=col).fill = PatternFill(start_color=color_code, end_color=color_code, fill_type="solid")
 
-    # Apply color formatting based on frequency
-    for row in range(2, ws.max_row + 1):  # Skip header row
-        station_name = ws.cell(row=row, column=1).value
-        frequency = input_df[input_df["Station"] == station_name]["Frequency"].values[0]
-        color_code = color_map.get(frequency, "FFFFFF")  # Default white if missing
-
-        for col in range(2, ws.max_column + 1):  # Apply color to all station slots
-            ws.cell(row=row, column=col).fill = PatternFill(start_color=color_code, end_color=color_code, fill_type="solid")
-
-    # Save final colored Excel file
+    # Save final file
     wb.save(OUTPUT_FILE)
