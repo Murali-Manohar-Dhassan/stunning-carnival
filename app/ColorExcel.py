@@ -1,6 +1,9 @@
 import pandas as pd
 import openpyxl
 from openpyxl.styles import PatternFill
+import os
+
+BASE_DIR = os.getcwd()  # Get the current working directory
 
 # Define a color map based on frequency values
 color_map = {
@@ -14,7 +17,7 @@ color_map = {
 }
 
 # Read the input data from the Excel file
-input_file_path = "C:/Users/DELL/Frequency Allottment/slot_allocation.xlsx"  # Replace with your input Excel file path
+input_file_path = os.path.join(BASE_DIR, "slot_allocation.xlsx")
 input_df = pd.read_excel(input_file_path)
 
 # Generate all possible slot names (P1 to P45)
@@ -52,7 +55,7 @@ for _, row in input_df.iterrows():
 output_df.fillna("", inplace=True)
 
 # Save the DataFrame to an Excel file using openpyxl to apply formatting
-output_file_path = "C:/Users/DELL/Frequency Allottment/output_kavach_slots_colored.xlsx"  # Output file path
+output_file_path = os.path.join(BASE_DIR, "output_kavach_slots_colored.xlsx")
 output_df.to_excel(output_file_path, index=False)
 
 # Load the saved workbook to apply color formatting
