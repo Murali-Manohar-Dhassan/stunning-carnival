@@ -5,13 +5,16 @@ from app.frequencyAllotment import allocate_slots
 from app.ColorExcel import apply_frequency_coloring
 from app.colorCodingScheme import apply_slot_coloring
 
-# Define file paths
+# Define file paths dynamically
 BASE_DIR = os.getcwd()
 INPUT_FILE = os.path.join(BASE_DIR, "slot_allocation.xlsx")
 OUTPUT_FILE = os.path.join(BASE_DIR, "output_kavach_slots_colored.xlsx")
 
 def generate_excel(stations):
-    allocations = allocate_slots(stations)  # Call slot allocation logic
+    print("🟢 Starting slot allocation process...")
+
+    # Call your slot allocation function
+    allocations = allocate_slots(stations)
     
     # Convert allocations into DataFrame
     df = pd.DataFrame(allocations)
@@ -19,16 +22,18 @@ def generate_excel(stations):
     # Save allocation to Excel
     df.to_excel(INPUT_FILE, index=False)
 
-    # ✅ Log when the file is created
-    print(f"✅ File Created: {INPUT_FILE}")
+    print(f"✅ Successfully created: {INPUT_FILE}")
     
     # Ensure file is fully written before proceeding
     wait_for_file(INPUT_FILE)
 
     # Apply color formatting using existing scripts
+    print("🎨 Applying frequency-based coloring...")
     apply_frequency_coloring(INPUT_FILE)  # Use ColorExcel.py logic
+    print("🎨 Applying slot-based coloring...")
     apply_slot_coloring(INPUT_FILE)  # Use colorCodingScheme.py logic
 
+    print(f"✅ Final output generated: {OUTPUT_FILE}")
     return OUTPUT_FILE  # Return final colored Excel file
 
 # Ensure the file is created before proceeding
