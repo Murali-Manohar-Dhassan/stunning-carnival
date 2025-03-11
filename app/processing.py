@@ -54,15 +54,26 @@ def allocate_slots(stations, max_slots=45, max_frequencies=7):
 
 # Step 2: Generate Excel File
 def generate_excel(stations):
-    allocations = allocate_slots(stations)
+    allocations = allocate_slots(stations)  # Get allocations
+
+    # Convert allocations into DataFrame
     df = pd.DataFrame(allocations)
-    df.insert(0, "Slot", [f"P{i}" for i in range(1, len(df) + 1)])  # Add Slot column
+    
+    # Ensure the "Frequency" column exists
+    if "Frequency" not in df.columns:
+        df["Frequency"] = 1  # Default frequency if missing
+
+    # Add "Slot" column
+    df.insert(0, "Slot", [f"P{i}" for i in range(1, len(df) + 1)])
+
+    # Save to Excel
     df.to_excel(INPUT_FILE, index=False)
 
-    # Apply color scheme
+    # Apply color scheme AFTER making sure "Frequency" exists
     apply_color_scheme()
     
-    return OUTPUT_FILE  # Return final colored file
+    return OUTPUT_FILE  # Return final colored Excel file
+
 
 # Step 3: Apply Color Coding
 def apply_color_scheme():
