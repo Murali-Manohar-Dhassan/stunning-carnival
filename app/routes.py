@@ -13,14 +13,20 @@ def allocate_slots_endpoint():
     try:
         stations = request.json
         allocations = allocate_slots(stations)
-        file_path = generate_excel(allocations)
-        return jsonify({"fileUrl": f"/download/{file_path}"})
+        file_path = generate_excel(allocations)  # Ensure this returns the correct path
+        # Correct file URL
+        return jsonify({"fileUrl": "/download"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/download/<path:filename>")
-def download_file(filename):
-    return send_file(filename, as_attachment=True)
+@app.route("/download")
+def download_file():
+    file_path = os.path.join(os.getcwd(), "slot_allocation.xlsx")  # Correct file path
+
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return jsonify({"error": "File not found"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
