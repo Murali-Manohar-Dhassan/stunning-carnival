@@ -1,9 +1,9 @@
 import os
 import pandas as pd
 import openpyxl
-from frequencyAllotment import allocate_slots
-from ColorExcel import apply_frequency_coloring
-from colorCodingScheme import apply_slot_coloring
+from app.frequencyAllotment import allocate_slots
+from app.ColorExcel import apply_frequency_coloring
+from app.colorCodingScheme import apply_slot_coloring
 
 # Define file paths
 BASE_DIR = os.getcwd()
