@@ -24,8 +24,19 @@ def generate_excel(stations):
     wait_for_file(INPUT_FILE)
 
     # Apply color formatting using existing scripts
-    apply_frequency_coloring(INPUT_FILE)  # Use ColorExcel.py logic
-    apply_slot_coloring(INPUT_FILE)  # Use colorCodingScheme.py logic
+# Ensure the file is fully written before applying coloring
+max_wait_time = 10
+wait_time = 0
+while not os.path.exists(INPUT_FILE) and wait_time < max_wait_time:
+    time.sleep(1)
+    wait_time += 1
+
+if not os.path.exists(INPUT_FILE):
+    raise FileNotFoundError(f"Expected file '{INPUT_FILE}' not found. Ensure slot allocation runs first.")
+
+apply_frequency_coloring(INPUT_FILE)
+apply_slot_coloring(INPUT_FILE)
+
 
     return OUTPUT_FILE  # Return final colored Excel file
 
