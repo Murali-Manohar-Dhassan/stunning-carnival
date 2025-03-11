@@ -1,5 +1,6 @@
 import pandas as pd
 import xlsxwriter
+import os
 
 def allocate_slots(stations, max_slots=45, max_frequencies=7):
     allocations = []
@@ -58,6 +59,8 @@ def allocate_slots(stations, max_slots=45, max_frequencies=7):
     return allocations
 
 def generate_excel(allocations, file_path="data/slot_allocation.xlsx"):
+    # Ensure a writable directory
+    file_path = os.path.join(os.getcwd(), "slot_allocation.xlsx")
     workbook = xlsxwriter.Workbook(file_path)
     worksheet = workbook.add_worksheet()
     headers = ["Station", "Frequency", "Stationary Kavach Slots", "Onboard Kavach Slots"]
