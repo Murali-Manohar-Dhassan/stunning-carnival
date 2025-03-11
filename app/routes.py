@@ -1,8 +1,13 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import os
+import threading
 from app.processing import generate_excel
 
 app = Flask(__name__)
+
+# Background processing function
+def process_data_in_background(stations):
+    generate_excel(stations)
 
 @app.route("/")
 def home():
@@ -12,20 +17,23 @@ def home():
 def allocate_slots_endpoint():
     try:
         stations = request.json
-        final_excel_path = generate_excel(stations)  # Now generates final output file
+        
+        # Start processing in a new thread
+        thread = threading.Thread(target=process_data_in_background, args=(stations,))
+        thread.start()
 
-        return jsonify({"fileUrl": "/download"})  # Return correct download path
+        return jsonify({"message": "Processing started, check back in a few seconds", "fileUrl": "/download"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/download")
 def download_file():
-    file_path = os.path.join(os.getcwd(), "output_kavach_slots_colored.xlsx")  # Ensure correct file path
+    file_path = os.path.join(os.getcwd(), "output_kavach_slots_colored.xlsx")
 
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
     else:
-        return jsonify({"error": "Final output file not found"}), 404
+        return jsonify({"error": "Final output file not yet available. Try again later."}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
