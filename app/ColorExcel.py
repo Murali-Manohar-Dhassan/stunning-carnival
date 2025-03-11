@@ -18,6 +18,20 @@ color_map = {
 
 # Read the input data from the Excel file
 input_file_path = os.path.join(BASE_DIR, "slot_allocation.xlsx")
+import os
+import time
+
+# Wait for slot_allocation.xlsx to be created (max wait time: 10 seconds)
+max_wait_time = 10
+wait_time = 0
+while not os.path.exists(input_file_path) and wait_time < max_wait_time:
+    time.sleep(1)
+    wait_time += 1
+
+# Check again before reading
+if not os.path.exists(input_file_path):
+    raise FileNotFoundError(f"Expected file '{input_file_path}' not found after waiting {max_wait_time} seconds.")
+
 input_df = pd.read_excel(input_file_path)
 
 # Generate all possible slot names (P1 to P45)
