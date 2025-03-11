@@ -1,13 +1,13 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import os
 import threading
-from app.processing import generate_excel
+from processing import generate_excel
 
 app = Flask(__name__)
 
 # Background processing function
 def process_data_in_background(stations):
-    generate_excel(stations)
+    generate_excel(stations)  # Runs your existing logic
 
 @app.route("/")
 def home():
@@ -18,7 +18,7 @@ def allocate_slots_endpoint():
     try:
         stations = request.json
         
-        # Start processing in a new thread
+        # Start processing in a new thread to prevent timeouts
         thread = threading.Thread(target=process_data_in_background, args=(stations,))
         thread.start()
 
