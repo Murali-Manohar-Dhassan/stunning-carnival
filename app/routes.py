@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import os
 import threading
-from processing import generate_excel
+from app.processing import generate_excel
 
 app = Flask(__name__)
 
