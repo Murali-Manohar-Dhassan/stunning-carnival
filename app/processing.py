@@ -117,13 +117,22 @@ def generate_excel(stations):
         df.to_excel(INPUT_FILE, index=False)
 
         # Apply color scheme AFTER making sure "Frequency" exists
-        apply_color_scheme()
+        if os.path.exists(INPUT_FILE):  # Ensure file exists before processing
+            print("Applying color scheme...")
+            apply_color_scheme()
+        else:
+            print("Error: INPUT_FILE not found before applying color scheme.")
 
-        print(f"Excel file saved successfully: {OUTPUT_FILE}")
+        if os.path.exists(OUTPUT_FILE):
+            print(f"Excel file saved successfully: {OUTPUT_FILE}")
+            return OUTPUT_FILE  # Return final colored Excel file
+        else:
+            print(f"Warning: OUTPUT_FILE not found. Returning unformatted file: {INPUT_FILE}")
+            return INPUT_FILE  # Return unformatted file if coloring fails
+
     except Exception as e:
-        print(f"Error saving Excel file: {e}")
-
-    return OUTPUT_FILE  # Return final colored Excel file
+        print(f"Error generating Excel file: {e}")
+        return None  # Return None if something goes wrong
 
 
 # Step 3: Apply Color Coding
