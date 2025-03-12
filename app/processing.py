@@ -101,22 +101,28 @@ def generate_excel(stations):
     allocations = allocate_slots(stations)  # Get allocations
     print("Generating Excel file...")
 
-    # Convert allocations into DataFrame
-    df = pd.DataFrame(allocations)
-    
-    # Ensure the "Frequency" column exists
-    if "Frequency" not in df.columns:
-        df["Frequency"] = 1  # Default frequency if missing
+    try:
+        # Convert allocations into DataFrame
+        df = pd.DataFrame(allocations)
 
-    # Add "Slot" column
-    df.insert(0, "Slot", [f"P{i}" for i in range(1, len(df) + 1)])
+        # Ensure the "Frequency" column exists
+        if "Frequency" not in df.columns:
+            df["Frequency"] = 1  # Default frequency if missing
 
-    # Save to Excel
-    df.to_excel(INPUT_FILE, index=False)
+        # Add "Slot" column
+        df.insert(0, "Slot", [f"P{i}" for i in range(1, len(df) + 1)])
 
-    # Apply color scheme AFTER making sure "Frequency" exists
-    apply_color_scheme()
-    
+        # Save to Excel
+        print(f"Saving unformatted Excel file to: {INPUT_FILE}")
+        df.to_excel(INPUT_FILE, index=False)
+
+        # Apply color scheme AFTER making sure "Frequency" exists
+        apply_color_scheme()
+
+        print(f"Excel file saved successfully: {OUTPUT_FILE}")
+    except Exception as e:
+        print(f"Error saving Excel file: {e}")
+
     return OUTPUT_FILE  # Return final colored Excel file
 
 
