@@ -21,8 +21,10 @@ def allocate_slots_endpoint():
         stations = request.json
         
         # Start processing in a new thread
+        '''
         thread = threading.Thread(target=process_data_in_background, args=(stations,), daemon=True)
-        thread.start()
+        thread.start()'''
+        generate_excel(stations)  # Call directly in /allocate_slots_endpoint
 
         return jsonify({"message": "Processing started, check back in a few seconds", "fileUrl": "/download"})
     except Exception as e:
@@ -31,6 +33,7 @@ def allocate_slots_endpoint():
 @app.route("/download")
 def download_file():
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], "output_kavach_slots_colored.xlsx")
+    print(f"Checking if file exists: {file_path} -> {os.path.exists(file_path)}")
 
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
