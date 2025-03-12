@@ -99,6 +99,7 @@ def allocate_slots(stations, max_slots=45, max_frequencies=7):
 # Step 2: Generate Excel File
 def generate_excel(stations):
     allocations = allocate_slots(stations)  # Get allocations
+    print("Generating Excel file...")
 
     # Convert allocations into DataFrame
     df = pd.DataFrame(allocations)
