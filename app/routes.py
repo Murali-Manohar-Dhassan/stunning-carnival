@@ -5,7 +5,10 @@ from app.processing import generate_excel
 
 app = Flask(__name__)
 
-app.config["UPLOAD_FOLDER"] = os.getcwd()
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 # Background processing function
 def process_data_in_background(stations):
     
