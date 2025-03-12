@@ -43,13 +43,15 @@
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
+        <p id="loadingMessage" class="text-primary mt-2">Processing... Please wait.</p>
     </div>
+    
     <script>
-        // Function to dynamically generate station input fields based on user input
+        // Function to dynamically generate station input fields
         function generateStationFields() {
             const numStations = document.getElementById("numStations").value;
             const container = document.getElementById("stationContainer");
-            container.innerHTML = ""; // Clear any previous entries
+            container.innerHTML = ""; // Clear previous entries
 
             if (!numStations || numStations < 1) {
                 alert("Please enter a valid number of stations.");
@@ -82,14 +84,20 @@
 
             // Collect station data from user input
             for (let i = 1; i <= numStations; i++) {
-                stationData.push({
-                    name: document.getElementById(`stationName${i}`).value,
-                    stationSlots: parseInt(document.getElementById(`stationarySlots${i}`).value),
-                    onboardSlots: parseInt(document.getElementById(`onboardSlots${i}`).value)
-                });
+                const name = document.getElementById(`stationName${i}`).value.trim();
+                const stationSlots = parseInt(document.getElementById(`stationarySlots${i}`).value) || 0;
+                const onboardSlots = parseInt(document.getElementById(`onboardSlots${i}`).value) || 0;
+
+                if (!name) {
+                    alert(`Station ${i} name cannot be empty.`);
+                    document.getElementById("loadingSpinner").style.display = "none";
+                    return;
+                }
+
+                stationData.push({ name, stationSlots, onboardSlots });
             }
 
-            // Send collected data to the server via a POST request
+            // Send collected data to the server
             fetch("/allocate_slots_endpoint", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -101,16 +109,16 @@
                     checkFileReady(data.fileUrl); // Start polling to check if file is ready
                 } else {
                     alert("Error generating file.");
-                    document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+                    document.getElementById("loadingSpinner").style.display = "none";
                 }
             })
             .catch(err => {
                 alert("Error: " + err);
-                document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation on error
+                document.getElementById("loadingSpinner").style.display = "none";
             });
         }
 
-        // Function to periodically check if the file is ready before downloading
+        // Function to check if the file is ready before downloading
         function checkFileReady(fileUrl) {
             let attempts = 0;
             let maxAttempts = 10; // Maximum number of checks before timing out
@@ -122,25 +130,26 @@
                     if (response.status === 200) {
                         // File is ready, trigger download
                         window.location.href = fileUrl;
-                        document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+                        document.getElementById("loadingSpinner").style.display = "none"; 
                     } else if (response.status === 202) {
-                        // File is still being processed, keep checking
+                        // Update UI with progress attempt
+                        document.getElementById("loadingMessage").innerText = `Processing... Attempt ${attempts + 1} of ${maxAttempts}`;
+                        
                         if (attempts < maxAttempts) {
                             attempts++;
                             setTimeout(poll, checkInterval);
                         } else {
                             alert("File processing took too long. Try again later.");
-                            document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+                            document.getElementById("loadingSpinner").style.display = "none"; 
                         }
                     } else {
-                        // Some other error occurred
                         alert("Error fetching file.");
-                        document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+                        document.getElementById("loadingSpinner").style.display = "none"; 
                     }
                 })
                 .catch(err => {
                     alert("Error: " + err);
-                    document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation on error
+                    document.getElementById("loadingSpinner").style.display = "none"; 
                 });
             }
 
