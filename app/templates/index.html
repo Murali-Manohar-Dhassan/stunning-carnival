@@ -98,18 +98,55 @@
             .then(response => response.json())
             .then(data => {
                 if (data.fileUrl) {
-                // Automatically trigger file download
-                window.location.href = data.fileUrl;
+                    checkFileReady(data.fileUrl); // Start polling to check if file is ready
                 } else {
                     alert("Error generating file.");
+                    document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
                 }
-                document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
             })
             .catch(err => {
                 alert("Error: " + err);
                 document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation on error
             });
         }
+
+        // Function to periodically check if the file is ready before downloading
+        function checkFileReady(fileUrl) {
+            let attempts = 0;
+            let maxAttempts = 10; // Maximum number of checks before timing out
+            let checkInterval = 3000; // Check every 3 seconds
+
+            function poll() {
+                fetch(fileUrl, { method: "HEAD" }) // HEAD request checks file existence without downloading
+                .then(response => {
+                    if (response.status === 200) {
+                        // File is ready, trigger download
+                        window.location.href = fileUrl;
+                        document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+                    } else if (response.status === 202) {
+                        // File is still being processed, keep checking
+                        if (attempts < maxAttempts) {
+                            attempts++;
+                            setTimeout(poll, checkInterval);
+                        } else {
+                            alert("File processing took too long. Try again later.");
+                            document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+                        }
+                    } else {
+                        // Some other error occurred
+                        alert("Error fetching file.");
+                        document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation
+                    }
+                })
+                .catch(err => {
+                    alert("Error: " + err);
+                    document.getElementById("loadingSpinner").style.display = "none"; // Hide loading animation on error
+                });
+            }
+
+            poll(); // Start polling for file readiness
+        }
+
     </script>
 </body>
 </html>
