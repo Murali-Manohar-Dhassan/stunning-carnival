@@ -5,13 +5,13 @@ from app.processing import generate_excel
 
 app = Flask(__name__)
 
+# Ensure output directory exists
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Background processing function
 def process_data_in_background(stations):
-    
     generate_excel(stations)
 
 @app.route("/")
@@ -23,14 +23,12 @@ def allocate_slots_endpoint():
     try:
         stations = request.json
         
-        # Start processing in a new thread
-        '''
-        thread = threading.Thread(target=process_data_in_background, args=(stations,), daemon=True)
-        thread.start()'''
+        # Start processing without threading for now
         generate_excel(stations)  # Call directly in /allocate_slots_endpoint
 
         return jsonify({"message": "Processing started, check back in a few seconds", "fileUrl": "/download"})
     except Exception as e:
+        print(f"Error in allocation: {e}")  # Debug log
         return jsonify({"error": str(e)}), 500
 
 @app.route("/download")
