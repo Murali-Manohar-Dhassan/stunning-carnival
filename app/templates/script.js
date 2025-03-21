@@ -69,55 +69,43 @@ function submitData() {
     });
 }
 
-// Function to handle Excel file upload and send data to the server
+// Function to handle Excel file upload and preview the data in the UI
 function uploadExcel() {
     const fileInput = document.getElementById("excelFile");
-    const file = fileInput.files[0];
-
-    if (!file) {
+    if (!fileInput.files.length) {
         alert("Please select an Excel file.");
         return;
     }
 
-    document.getElementById("loadingSpinner").style.display = "block"; // Show loading animation
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+    fetch("/upload_excel", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            populateFieldsFromExcel(data);
+        }
+    })
+    .catch(err => alert("Error: " + err));
+}
 
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+// Function to populate the form fields with the data extracted from Excel
+function populateFieldsFromExcel(stationData) {
+    // Update the number of stations to match the Excel data
+    document.getElementById("numStations").value = stationData.length;
+    generateStationFields();
 
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-        // Send the extracted data to the server
-        fetch("/allocate_slots_endpoint", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(jsonData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.fileUrl) {
-                checkFileReady(data.fileUrl);
-            } else {
-                alert("Error generating file.");
-                document.getElementById("loadingSpinner").style.display = "none";
-            }
-        })
-        .catch(err => {
-            alert("Error: " + err);
-            document.getElementById("loadingSpinner").style.display = "none";
-        });
-    };
-
-    reader.onerror = function(ex) {
-        alert("Error reading file: " + ex);
-        document.getElementById("loadingSpinner").style.display = "none";
-    };
-
-    reader.readAsArrayBuffer(file);
+    stationData.forEach((station, index) => {
+        document.getElementById(`stationName${index + 1}`).value = station.name || "";
+        document.getElementById(`stationarySlots${index + 1}`).value = station.stationSlots || 0;
+        document.getElementById(`onboardSlots${index + 1}`).value = station.onboardSlots || 0;
+    });
 }
 
 // Function to check if the file is ready before downloading
