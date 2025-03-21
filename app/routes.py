@@ -41,5 +41,32 @@ def download_file():
     else:
         return jsonify({"message": "Final output file not yet available. Try again later."}), 202
 
+
+@app.route("/upload_excel", methods=["POST"])
+def upload_excel():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "No file selected"}), 400
+
+    if not file.filename.endswith((".xls", ".xlsx")):
+        return jsonify({"error": "Invalid file format"}), 400
+
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+    file.save(file_path)
+
+    try:
+        df = pd.read_excel(file_path)
+        # Assuming your Excel file has columns that match your data structure,
+        # e.g., "name", "stationSlots", "onboardSlots". You can rename columns as needed.
+        station_data = df.to_dict(orient="records")
+        return jsonify(station_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True)
